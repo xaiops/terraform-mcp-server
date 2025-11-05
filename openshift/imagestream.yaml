@@ -1,0 +1,11 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: terraform-mcp-server
+  namespace: ocp-mcp-server
+  labels:
+    app: terraform-mcp-server
+spec:
+  lookupPolicy:
+    local: false
+

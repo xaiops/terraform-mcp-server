@@ -1,0 +1,33 @@
+#cloud-config
+hostname: ${hostname}
+preserve_hostname: false
+
+users:
+  - name: root
+    ssh_authorized_keys:
+      - ${ssh_key}
+  - name: cloud-user
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: wheel
+    ssh_authorized_keys:
+      - ${ssh_key}
+    lock_passwd: false
+    passwd: $6$rounds=4096$random_salt$encrypted_password_hash
+
+chpasswd:
+  expire: false
+
+ssh_pwauth: false
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - qemu-guest-agent
+  - cloud-init
+
+runcmd:
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+  - cloud-init clean --logs
+

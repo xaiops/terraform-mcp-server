@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: terraform-mcp-server
+  namespace: ocp-mcp-server
+  labels:
+    app: terraform-mcp-server
+spec:
+  to:
+    kind: Service
+    name: terraform-mcp-server
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+

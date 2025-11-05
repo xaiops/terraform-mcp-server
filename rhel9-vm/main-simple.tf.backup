@@ -1,0 +1,150 @@
+# Alternative simpler configuration using containerDisk instead of DataVolume
+# This is easier to get started with but requires a container image that supports containerDisk
+
+terraform {
+  required_version = ">= 1.0"
+  
+  required_providers {
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.38"
+    }
+  }
+  
+  cloud {
+    organization = "ocp-virt-tfe-demo"
+    workspaces {
+      name = "openshift-cluster-management"
+    }
+  }
+}
+
+provider "kubernetes" {
+  # Authentication via KUBE_HOST, KUBE_TOKEN, and KUBE_CLUSTER_CA_CERT_DATA
+  # environment variables set in Terraform Cloud workspace
+}
+
+# Create namespace for the VM
+resource "kubernetes_namespace" "rhel9_vm" {
+  metadata {
+    name = var.vm_namespace
+    labels = {
+      app = "rhel9-vm"
+    }
+  }
+}
+
+# Create RHEL 9 VirtualMachine using kubernetes_manifest (simpler version with containerDisk)
+resource "kubernetes_manifest" "rhel9_vm_simple" {
+  depends_on = [kubernetes_namespace.rhel9_vm]
+  
+  manifest = {
+    apiVersion = "kubevirt.io/v1"
+    kind       = "VirtualMachine"
+    metadata = {
+      name      = var.vm_name
+      namespace = var.vm_namespace
+      labels = {
+        app                 = "rhel9-vm"
+        kubevirt.io/vm      = var.vm_name
+        "vm.kubevirt.io/os" = "rhel9"
+      }
+      annotations = {
+        "description" = "RHEL 9 Virtual Machine managed by Terraform (Simple Container Disk)"
+      }
+    }
+    spec = {
+      running = var.vm_running
+      template = {
+        metadata = {
+          labels = {
+            kubevirt.io/domain = var.vm_name
+            kubevirt.io/size   = var.vm_size
+          }
+        }
+        spec = {
+          domain = {
+            cpu = {
+              cores   = var.vm_cpu_cores
+              sockets = var.vm_cpu_sockets
+              threads = var.vm_cpu_threads
+            }
+            devices = {
+              disks = [
+                {
+                  name = "rootdisk"
+                  disk = {
+                    bus = "virtio"
+                  }
+                },
+                {
+                  name = "cloudinitdisk"
+                  disk = {
+                    bus = "virtio"
+                  }
+                }
+              ]
+              interfaces = [
+                {
+                  name = "default"
+                  masquerade = {}
+                }
+              ]
+            }
+            machine = {
+              type = "q35"
+            }
+            resources = {
+              requests = {
+                memory = var.vm_memory
+                cpu    = var.vm_cpu_cores
+              }
+              limits = {
+                memory = var.vm_memory_limit
+                cpu    = var.vm_cpu_limit
+              }
+            }
+          }
+          networks = [
+            {
+              name = "default"
+              pod = {}
+            }
+          ]
+          volumes = [
+            {
+              name = "rootdisk"
+              containerDisk = {
+                image = var.vm_image_url
+              }
+            },
+            {
+              name = "cloudinitdisk"
+              cloudInitNoCloud = {
+                userData = base64encode(templatefile("${path.module}/cloud-init.yaml", {
+                  hostname = var.vm_name
+                  ssh_key  = var.vm_ssh_public_key != "" ? var.vm_ssh_public_key : "# No SSH key provided"
+                }))
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+  
+  wait {
+    fields = {
+      "status.ready" = "true"
+    }
+  }
+  
+  timeouts {
+    create = "30m"
+    update = "20m"
+    delete = "10m"
+  }
+  
+  computed_fields = ["metadata.annotations", "metadata.labels", "status"]
+}
+

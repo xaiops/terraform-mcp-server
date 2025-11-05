@@ -1,0 +1,36 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: terraform-mcp-server
+  namespace: ocp-mcp-server
+  labels:
+    app: terraform-mcp-server
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/hashicorp/terraform-mcp-server.git
+      ref: main
+    contextDir: /
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+      buildArgs:
+      - name: VERSION
+        value: "latest"
+  output:
+    to:
+      kind: ImageStreamTag
+      name: terraform-mcp-server:latest
+  triggers:
+  - type: ConfigChange
+  - type: ImageChange
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+

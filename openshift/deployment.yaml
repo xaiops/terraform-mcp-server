@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terraform-mcp-server
+  namespace: ocp-mcp-server
+  labels:
+    app: terraform-mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: terraform-mcp-server
+  template:
+    metadata:
+      labels:
+        app: terraform-mcp-server
+    spec:
+      containers:
+      - name: terraform-mcp-server
+        image: hashicorp/terraform-mcp-server:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: TRANSPORT_MODE
+          value: "streamable-http"
+        - name: TRANSPORT_HOST
+          value: "0.0.0.0"
+        - name: TRANSPORT_PORT
+          value: "8080"
+        - name: MCP_ENDPOINT
+          value: "/mcp"
+        - name: MCP_SESSION_MODE
+          valueFrom:
+            configMapKeyRef:
+              name: terraform-mcp-server-config
+              key: session-mode
+              optional: true
+        - name: TFE_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              name: terraform-mcp-server-config
+              key: tfe-address
+              optional: true
+        - name: TFE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: terraform-mcp-server-secrets
+              key: tfe-token
+              optional: true
+        - name: TFE_SKIP_TLS_VERIFY
+          valueFrom:
+            configMapKeyRef:
+              name: terraform-mcp-server-config
+              key: tfe-skip-tls-verify
+              optional: true
+        - name: MCP_ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: terraform-mcp-server-config
+              key: allowed-origins
+              optional: true
+        - name: MCP_CORS_MODE
+          valueFrom:
+            configMapKeyRef:
+              name: terraform-mcp-server-config
+              key: cors-mode
+              optional: true
+        - name: MCP_RATE_LIMIT_GLOBAL
+          valueFrom:
+            configMapKeyRef:
+              name: terraform-mcp-server-config
+              key: rate-limit-global
+              optional: true
+        - name: MCP_RATE_LIMIT_SESSION
+          valueFrom:
+            configMapKeyRef:
+              name: terraform-mcp-server-config
+              key: rate-limit-session
+              optional: true
+        - name: ENABLE_TF_OPERATIONS
+          valueFrom:
+            configMapKeyRef:
+              name: terraform-mcp-server-config
+              key: enable-tf-operations
+              optional: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
