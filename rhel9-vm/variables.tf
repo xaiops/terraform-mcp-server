@@ -72,8 +72,8 @@ variable "vm_storage_class" {
 
 variable "vm_image_url" {
   type        = string
-  description = "Container image URL for RHEL 9 (e.g., 'registry.redhat.io/rhel9/rhel-bootc:latest')"
-  default     = "registry.redhat.io/rhel9/rhel-bootc:latest"
+  description = "Container image URL for RHEL 9. Public image: 'quay.io/containerdisks/rhel9:latest' (no auth required) or Red Hat registry: 'registry.redhat.io/rhel9/rhel-bootc:latest' (requires pull secret)"
+  default     = "quay.io/containerdisks/rhel9:latest"
 }
 
 variable "vm_ssh_public_key" {

@@ -23,9 +23,9 @@ vm_disk_size       = "30Gi"
 vm_storage_class   = ""  # Leave empty to use default storage class
 
 # Image Configuration
-# For DataVolume: registry.redhat.io/rhel9/rhel-bootc:latest
-# For ContainerDisk: quay.io/containerdisks/rhel9:latest
-vm_image_url       = "registry.redhat.io/rhel9/rhel-bootc:latest"
+# Public image (no auth required): quay.io/containerdisks/rhel9:latest
+# Red Hat registry (requires pull secret): registry.redhat.io/rhel9/rhel-bootc:latest
+vm_image_url       = "quay.io/containerdisks/rhel9:latest"
 
 # SSH Public Key (required for VM access)
 # Get your SSH public key with: cat ~/.ssh/id_rsa.pub

@@ -20,7 +20,7 @@ Key variables you may want to customize:
 - `vm_cpu_cores`: Number of CPU cores (default: `2`)
 - `vm_memory`: Memory request (default: `4Gi`)
 - `vm_disk_size`: Root disk size (default: `30Gi`)
-- `vm_image_url`: RHEL 9 image URL (default: `registry.redhat.io/rhel9/rhel-bootc:latest`)
+- `vm_image_url`: RHEL 9 image URL (default: `quay.io/containerdisks/rhel9:latest` - public, no auth required)
 - `vm_ssh_public_key`: SSH public key for VM access (required, sensitive)
 
 ### Setting Variables in Terraform Cloud
@@ -143,7 +143,9 @@ If the DataVolume fails to create:
 
 ### Image Pull Issues
 
-If the container image cannot be pulled (e.g., `registry.redhat.io` requires authentication):
+**Default Configuration**: The default image (`quay.io/containerdisks/rhel9:latest`) is public and requires no authentication.
+
+If you want to use Red Hat registry images (`registry.redhat.io`) instead:
 
 1. **Create a pull secret** for Red Hat Registry:
    ```bash
@@ -155,15 +157,14 @@ If the container image cannot be pulled (e.g., `registry.redhat.io` requires aut
      -n rhel9-vms
    ```
 
-2. **Set the pull secret variable** in Terraform Cloud:
+2. **Set the Terraform variables** in Terraform Cloud:
    - Variable name: `vm_registry_pull_secret`
    - Variable value: `redhat-registry-pull-secret` (or your secret name)
-   - Type: Terraform variable
+   - Variable name: `vm_image_url`
+   - Variable value: `registry.redhat.io/rhel9/rhel-bootc:latest`
+   - Type: Terraform variables
 
-3. **Alternative**: Use a public image that doesn't require authentication:
-   - Update `vm_image_url` to use a public registry (e.g., `quay.io/containerdisks/rhel9:latest`)
-
-4. Verify network connectivity to the registry
+3. Verify network connectivity to the registry
 
 ## Cleanup
 
